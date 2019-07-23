@@ -74,10 +74,13 @@ def verifyVertical(bin, x, y):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--ip', type=str, required=True)
+    parser.add_argument('--name', type=str, required=True)
     args = parser.parse_args()
 
     s = socket.socket()
     s.connect((args.ip, PORT))  # Connect to board.
+
+    s.sendall(struct.pack('i', len(args.name)) + args.name)
 
     decoder = cv.QRCodeDetector()
 
