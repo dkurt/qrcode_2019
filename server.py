@@ -71,7 +71,8 @@ while True:
     moveCube = False
     currentAngle = 20
     client = Client()
-    print('New client: %s:%s' % client.addr)
+    clientName = receiveString(client.conn)
+    print('New client: %s:%s (%s)' % (client.addr[0], client.addr[1], clientName))
 
     cap = cv.VideoCapture(0)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, 640)
@@ -107,3 +108,4 @@ while True:
             print('Unexpected code: %d' % code)
             exit(0)
     cap.release()
+    print('')
