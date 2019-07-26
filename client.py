@@ -15,13 +15,19 @@ def read(size, s):
 
 
 def receiveImg(s):
-    rows, cols = struct.unpack('ii', read(4*2, s))
-    data = read(rows * cols, s)
-    return np.fromstring(data, dtype=np.uint8).reshape([rows, cols])
+    rows, cols, channels, length = struct.unpack('iiii', read(4*4, s))
+    data = read(length, s)
+    buf = np.fromstring(data, dtype=np.uint8)
+    img = cv.imdecode(buf, cv.IMREAD_COLOR)
+    return img.reshape([rows, cols, channels])
 
 
 def sendString(data, s):
     s.sendall(struct.pack('ii', TRY_TO_GUESS_CODE, len(data)) + data)
+
+
+def bgr2gray(img):
+    raise Exception('bgr2gray is not implemented')
 
 
 def gray2bin(img):
@@ -78,6 +84,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     s = socket.socket()
+    s.settimeout(60)
     s.connect((args.ip, PORT))  # Connect to board.
 
     s.sendall(struct.pack('i', len(args.name)) + args.name)
@@ -88,7 +95,8 @@ if __name__ == '__main__':
         s.send(struct.pack('i', GET_IMAGE_CODE))
         frame = receiveImg(s)
 
-        bin = gray2bin(frame)
+        gray = bgr2gray(frame)
+        bin = gray2bin(gray)
 
         points = []
         for y in range(bin.shape[0]):
