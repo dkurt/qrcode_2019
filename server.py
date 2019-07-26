@@ -15,9 +15,12 @@ parser.add_argument('--words', nargs='+', type=str, required=True)
 args = parser.parse_args()
 
 def sendImg(img, conn):
-    rows = img.shape[0]
-    cols = img.shape[1]
-    conn.sendall(struct.pack('ii', rows, cols) + img.tobytes())
+    if not img is None:
+        _, buf = cv.imencode(".jpg", img, [cv.IMWRITE_JPEG_QUALITY, 90])
+        rows = img.shape[0]
+        cols = img.shape[1]
+        channels = img.shape[2]
+        conn.sendall(struct.pack('iiii', rows, cols, channels, len(buf)) + buf.tobytes())
 
 
 def receiveString(conn):
@@ -51,7 +54,10 @@ moveCube = False
 
 class Client():
     def __init__(self):
-        setAngle(pwm, angle=20, timeout=1)
+        global currentAngle
+        while currentAngle > 20:
+            currentAngle -= 5
+            setAngle(pwm, angle=currentAngle, timeout=0.1)
         self.conn, self.addr = s.accept()
         self.conn.settimeout(60)  # 1 minute
         self.wordId = 0
@@ -69,8 +75,8 @@ print(args.words)
 while True:
     print('Waiting for client...')
     moveCube = False
-    currentAngle = 20
     client = Client()
+    currentAngle = 20
     clientName = receiveString(client.conn)
     print('New client: %s:%s (%s)' % (client.addr[0], client.addr[1], clientName))
 
@@ -94,8 +100,7 @@ while True:
         code = client.getCode()
         if code == GET_IMAGE_CODE:
             _, frame = cap.read()
-            gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-            sendImg(gray, client.conn)
+            sendImg(frame, client.conn)
         elif code == TRY_TO_GUESS_CODE:
             data = receiveString(client.conn)
             print(data)
