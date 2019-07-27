@@ -87,7 +87,7 @@ if __name__ == '__main__':
     s.settimeout(60)
     s.connect((args.ip, PORT))  # Connect to board.
 
-    s.sendall(struct.pack('i', len(args.name)) + args.name)
+    s.sendall(struct.pack('i', len(args.name)) + bytearray(args.name, 'utf8'))
 
     decoder = cv.QRCodeDetector()
 
